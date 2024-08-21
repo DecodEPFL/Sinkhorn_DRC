@@ -22,7 +22,7 @@ class Sinkhorn():
     # Implement golden search method to find the best value for lambda over a given interval.
     # Adapted from https://drlvk.github.io/nm/section-golden-section.html
     # For a reference https://en.wikipedia.org/wiki/Golden-section_search#Iterative_algorithm
-    def solve_golden_search(self, lam_min, lam_max, rho, eps, data, tol = 1e-4):
+    def solve_golden_search(self, lam_min, lam_max, rho, eps, data, tol = 1e-1):
 
         gr = .5*(3-np.sqrt(5))
         a = lam_min
@@ -46,6 +46,7 @@ class Sinkhorn():
                 fc = fd
                 d = b - gr*(b-a)
                 fd = self.solve_SDP(d, rho, eps, data)
+        return b
     
     # Solve the optimization problem from Sinkhorn control with fixed value of lambda (dual variable)
     def solve_SDP(self, lam, rho, eps, data):
@@ -61,7 +62,7 @@ class Sinkhorn():
         P = cp.Variable((self.nx*self.T,self.nx*self.T), PSD = True)
 
         # define the objective function
-        obj = lam*rho + cp.norm(s, 1)/s.size
+        obj = lam*rho + cp.sum(s)/s.size
 
         constraints = [P == lam*np.eye(self.nx*self.T)-Q]
 
@@ -102,9 +103,9 @@ class Sinkhorn():
         print('=====================================')
         print("Solving the optimization problem...")
         print('=====================================')
-        myprob.solve(solver='MOSEK', verbose=True)
-        print('Value of lambda: ', lam, 'Result: ', myprob.value)
-        return myprob.value**2
+        res = myprob.solve(solver='MOSEK', verbose=True)
+        print('Value of lambda: ', lam, 'Result: ', res)
+        return res
     
     def LQG(self):
 
@@ -113,7 +114,7 @@ class Sinkhorn():
         Phi_u = cp.Variable((self.nu*self.T, self.nx*self.T)) 
     
         # Define the objective function
-        obj = cp.norm(cp.vstack([Phi_x, Phi_u]), 'fro')
+        obj = cp.norm(0.3*cp.vstack([Phi_x, Phi_u]), 'fro')
 
         # Impose the achievability constraints
         constraints = [(self.I - self.Z @ self.A_bl) @ Phi_x - self.Z @ self.B_bl @ Phi_u == self.I]
@@ -147,21 +148,21 @@ def main():
     data_points = []
     for i in range(N):
         # Gaussian samples
-        # random_vec = np.random.default_rng().standard_normal(size=(d*T, 1))
+        random_vec = np.random.default_rng().normal(0, .3, size=(d*T, 1))
         # Uniform (-1, 1) samples
-        random_vec = 2*np.random.default_rng().random(size=(d*T, 1))-1
+        # random_vec = .15*np.random.default_rng().random(size=(d*T, 1))
         data_points.append(random_vec)
 
-    eps = 1e-3  # regularization parameter
-    rho = 0.1
+    eps = 1e-1  # regularization parameter
+    rho = 1e-1
     rho_bar = rho + eps*d*.5*(np.log(eps*np.pi)) # Sinkhorn radius
     lam_min = 0
     lam_max = 50
 
     controller = Sinkhorn(A, B, T, N)
-    res_sink = controller.solve_golden_search(lam_min, lam_max, rho_bar**2, eps, data_points)
+    controller.solve_golden_search(lam_min, lam_max, rho_bar**2, eps, data_points)  
     res_LQG = controller.LQG()
-    print(res_sink, res_LQG)
+    print(np.linalg.norm(controller.Phi.value, 'fro'), res_LQG)
     return
 
 if __name__ == "__main__":
