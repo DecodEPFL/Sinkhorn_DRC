@@ -1,23 +1,21 @@
-function [Phi_x, Phi_u, ret] = nominal_unconstrained(sys, sls, opt)
-    % Compute the unconstrained linear controller using the empirical
-    % center distribution
-
+function [Phi_x, Phi_u, objective] = causal_unconstrained_h2(sys, sls, opt, flag)
+%CAUSAL_UNCONSTRAINED computes an unconstrained causal linear control
+%policy that is optimal either in the H2 or in the Hinf sense
+    
     % Define the decision variables of the optimization problem
     Phi_x = sdpvar(sys.d*opt.N, sys.d*opt.N, 'full');
     Phi_u = sdpvar(sys.m*opt.N, sys.d*opt.N, 'full');
-    Phi = [Phi_x; Phi_u];
-
-    % define the objective function
-    objective = 0;
-    for i=1:opt.n
-        % Get the i-th datapoint
-        xi_hat = opt.data{i};
-        tmp = Phi*xi_hat;
-        objective = objective + tmp'*opt.C*tmp;
+    
+    % Define the objective function
+    if strcmp(flag, 'H2')
+        objective = norm(sqrtm(opt.C)*[Phi_x; Phi_u]*sqrtm(opt.Sigma), 'fro');
+    elseif strcmp(flag, 'Hinf')
+        objective = norm(sqrtm(opt.C)*[Phi_x; Phi_u], 2);
+    else
+        error('Something went wrong...');
     end
-
+   
     constraints = [];
-
     % Impose the achievability constraints
     constraints = [constraints, (sls.I - sls.Z*sls.A)*Phi_x - sls.Z*sls.B*Phi_u == sls.I];
     % Impose the causal sparsities on the closed loop responses
@@ -27,22 +25,19 @@ function [Phi_x, Phi_u, ret] = nominal_unconstrained(sys, sls, opt)
             constraints = [constraints, Phi_u((1+i*sys.m):((i+1)*sys.m), (1+j*sys.d):((j+1)*sys.d)) == zeros(sys.m, sys.d)];
         end
     end
-
+    
     % Solve the optimization problem
-    fprintf('=====================================')
-    fprintf("Solving the optimization problem...")
-    fprintf('=====================================')
-    options = sdpsettings('verbose', 2, 'solver', 'mosek');
+    options = sdpsettings('verbose', 0, 'solver', 'mosek');
     sol = optimize(constraints, objective, options);
     if ~(sol.problem == 0)
         error('Something went wrong...');
     end
     
     % Extract the closed-loop responses corresponding to a unconstrained causal 
-    % linear controller that is optimal
+    % linear controller that is optimal either in the H2 or in the Hinf sense
     Phi_x = value(Phi_x); 
     Phi_u = value(Phi_u);
     
-    % Extract the cost incurred by an unconstrained causal linear controller
-    ret = value(objective)/opt.n;
+    objective = value(objective)^2; % Extract the H2- or Hinf-optimal cost incurred by an unconstrained causal linear controller
+
 end
