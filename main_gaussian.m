@@ -3,7 +3,7 @@ close all; clearvars; clc;
 rng(1234);             % Set random seed for reproducibility
 
 %% Definition of the underlying discrete-time LTI system
-rho = {1000}; % Sinkhorn radius
+rho = {.1}; % Sinkhorn radius
 
 % sys.eps = num2cell(logspace(-5, 0, 5)); % Regularization parameter
 sys.eps = {0.001, 0.01, 0.1};
@@ -14,13 +14,14 @@ sys.B = [0;1];
 
 sys.d = size(sys.A, 1);   % Order of the system: state dimension
 sys.m = size(sys.B, 2);   % Number of input channels
+sys.p = sys.d;
 sys.E = eye(sys.d);
 
 % Definition of the parameters of the optimization problem
 opt.Qt = eye(sys.d); % Stage cost: state weight matrix
 opt.Rt = eye(sys.m); % Stage cost: input weight matrix
 
-opt.N = 15; % Control horizon
+opt.N = 2; % Control horizon
 
 opt.Q = kron(eye(opt.N), opt.Qt); % State cost matrix
 opt.R = kron(eye(opt.N), opt.Rt); % Input cost matrix
@@ -39,7 +40,7 @@ mean_vector = zeros(sys.d, 1); % Zero mean
 data_points = cell(opt.n, 1); % Initialize an empty cell array
 for i = 1:opt.n
     % Gaussian samples
-    trajectory = mvnrnd(mean_vector, 0.3*opt.Sigma_t, opt.N); % Size: N x d
+    trajectory = mvnrnd(mean_vector, opt.Sigma_t, opt.N); % Size: N x d
     data_points{i} = reshape(trajectory', [], 1);
 end
 opt.data = data_points;
@@ -179,13 +180,23 @@ Phi_nominal.u = Phi_u_nominal;
 [Phi_x_h2, Phi_u_h2, cost_h2] = causal_unconstrained_h2(sys, sls, opt, 'H2');
 
 %% Wasserstein DRControl unconstrained
-cost_W = {};
-Phi_W = {};
+cost_W = {}; cost2 = {};
+Phi_W = {}; Phi_W2 = {};
 for i=1:length(rho)
+    tic;
     [Phi_x, Phi_u, ret] = causal_unconstrained_Wasserstein(sys, sls, opt, rho{i});
+    elapsed = toc;
+    disp(['Elapsed time: ', num2str(elapsed), ' seconds']);
+    tic;
+    [Phi_x2, Phi_u2, ret2] = causal_unconstrained_Wasserstein_v2(sys, sls, opt, rho{i});
+    elapsed = toc;
+    disp(['Elapsed time: ', num2str(elapsed), ' seconds']);
     cost_W{i} = ret;
+    cost2{i} = ret2;
     Phi_W{i}.x = Phi_x;
     Phi_W{i}.u = Phi_u;
+    Phi_W2{i}.x = Phi_x2;
+    Phi_W2{i}.u = Phi_u2;
 end
 
 %% Compute the performances given the true distribution

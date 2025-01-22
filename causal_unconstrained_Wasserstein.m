@@ -6,7 +6,6 @@ function [Phi_x, Phi_u, objective] = causal_unconstrained_Wasserstein(sys, sls, 
     Phi_u = sdpvar(sys.m*opt.N, sys.d*opt.N, 'full');
     Phi = [Phi_x; Phi_u];
     
-    % Define the objective function
     s = sdpvar(opt.n, 1);
     gamma = sdpvar();
     Q = sdpvar(sys.d*opt.N, sys.d*opt.N, 'symmetric');

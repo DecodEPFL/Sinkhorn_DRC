@@ -3,8 +3,8 @@ function [Phi_x, Phi_u, objective] = causal_unconstrained_h2(sys, sls, opt, flag
 %policy that is optimal either in the H2 or in the Hinf sense
     
     % Define the decision variables of the optimization problem
-    Phi_x = sdpvar(sys.d*opt.N, sys.d*opt.N, 'full');
-    Phi_u = sdpvar(sys.m*opt.N, sys.d*opt.N, 'full');
+    Phi_u = sdpvar(sys.m*opt.N, sys.d + sys.p*(opt.N-1), 'full');
+    Phi_x = (sls.I - sls.Z*sls.A) \ (sls.Z*sls.B*Phi_u + sls.E); % Phi_x is given as function of Phi_u
     
     % Define the objective function
     if strcmp(flag, 'H2')
@@ -16,13 +16,14 @@ function [Phi_x, Phi_u, objective] = causal_unconstrained_h2(sys, sls, opt, flag
     end
    
     constraints = [];
-    % Impose the achievability constraints
-    constraints = [constraints, (sls.I - sls.Z*sls.A)*Phi_x - sls.Z*sls.B*Phi_u == sls.I];
+    % % Impose the achievability constraints
+    % constraints = [constraints, (sls.I - sls.Z*sls.A)*Phi_x - sls.Z*sls.B*Phi_u == sls.I];
+
     % Impose the causal sparsities on the closed loop responses
     for i = 0:opt.N-2
         for j = i+1:opt.N-1 % Set j from i+2 for non-strictly causal controller (first element in w is x0)
-            constraints = [constraints, Phi_x((1+i*sys.d):((i+1)*sys.d), (1+j*sys.d):((j+1)*sys.d)) == zeros(sys.d, sys.d)];
-            constraints = [constraints, Phi_u((1+i*sys.m):((i+1)*sys.m), (1+j*sys.d):((j+1)*sys.d)) == zeros(sys.m, sys.d)];
+            % constraints = [constraints, Phi_x((1+i*sys.d):((i+1)*sys.d), (1+j*sys.d):((j+1)*sys.d)) == zeros(sys.d, sys.d)];
+            constraints = [constraints, Phi_u((1+i*sys.m):((i+1)*sys.m), (1+j*sys.p):((j+1)*sys.p)) == zeros(sys.m, sys.p)];
         end
     end
     
