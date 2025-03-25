@@ -223,62 +223,68 @@ true_cost_H2 = norm(X * sqrtm(opt.Sigma), 'fro')^2;
 X = D_half * [Phi_nominal.x; Phi_nominal.u];
 true_cost_nominal = norm(X * sqrtm(opt.Sigma), 'fro')^2;
 
-% %% Plot cost comparison
-% 
-% % Define the figure dimensions in inches
-% width = 3.5; % One column width
-% height = 3.5 * 0.75; % Aspect ratio of 4:3, adjust as needed
-% 
-% % Create the figure
-% figure('Units', 'inches', 'Position', [1, 1, width, height]);
-% 
-% hold on;
-% 
-% % Define colors for each radius to keep them consistent across plots
-% colors = lines(3);  % Generates 3 distinguishable colors (one for each radius)
-% 
-% % Plot lines for each radius with corresponding epsilon values
-% for radiusIdx = 1:length(rho)
-%     % semilogx(epsilons_fine, cost_fine(:, radiusIdx), 'LineWidth', 1.5, 'Color', colors(radiusIdx, :));
-%     plot(cell2mat(sys.eps), cell2mat(cost(:, radiusIdx)), 'LineWidth', 1, 'Color', colors(radiusIdx, :));
-% end
-% 
-% set(gca, 'XScale', 'log');
-% 
-% % Now plot horizontal dashed lines for cost_W (same color as the lines for each radius)
-% for radiusIdx = 1:length(rho)
-%     yline(cell2mat(cost_W(radiusIdx)), '--', 'LineWidth', 1, 'Color', colors(radiusIdx, :));
-% end
-% 
-% % H2 line and letter on top
-% yline(cost_h2, '--', 'LineWidth', 1, 'Color', 'k');
-% text(1e-3, cost_h2*1.3, '$\mathcal{H}_2$', 'HorizontalAlignment', 'center', 'FontSize', 8, 'Interpreter', 'latex');
-% 
-% % Add labels, title, and legend
-% xlabel('\epsilon', 'Interpreter','tex', 'FontSize', 8);
-% ylabel('Cost', 'FontSize', 8);
-% % title('Worst case cost vs \epsilon for different radii', 'FontSize', 16, 'Interpreter','tex');
-% for i = 1:length(rho)
-%     legend_labels{i} = ['\rho = ', num2str(rho{i})];  % Convert each rho value to a string and format it
-% end
-% 
-% % Customize the x-axis ticks
-% xticks = 10.^(-5:4);
-% set(gca, 'XTick', xticks); % Set x-axis ticks
+%% Plot cost comparison
+
+% Define the figure dimensions in inches
+width = 3.5; % One column width
+height = 3.5 * 0.75; % Aspect ratio of 4:3, adjust as needed
+
+% Create the figure
+figure('Units', 'inches', 'Position', [1, 1, width, height]);
+
+hold on;
+
+% Define colors for each radius to keep them consistent across plots
+colors = lines(3);  % Generates 3 distinguishable colors (one for each radius)
+
+% Plot lines for each radius with corresponding epsilon values
+for radiusIdx = 1:length(rho)
+    % semilogx(epsilons_fine, cost_fine(:, radiusIdx), 'LineWidth', 1.5, 'Color', colors(radiusIdx, :));
+    plot(cell2mat(sys.eps), cell2mat(cost(:, radiusIdx)), 'LineWidth', 1, 'Color', colors(radiusIdx, :));
+end
+
+set(gca, 'XScale', 'log');
+
+% Now plot horizontal dashed lines for cost_W (same color as the lines for each radius)
+for radiusIdx = 1:length(rho)
+    yline(cell2mat(cost_W(radiusIdx)), '--', 'LineWidth', 1, 'Color', colors(radiusIdx, :));
+end
+
+% H2 line and letter on top
+yline(cost_h2, '--', 'LineWidth', 1, 'Color', 'k');
+text(1e-3, cost_h2*1.3, '$\mathcal{H}_2$', 'HorizontalAlignment', 'center', 'FontSize', 12, 'Interpreter', 'latex');
+
+% Add labels, title, and legend
+
+
+xlabel('$\epsilon$', 'Interpreter','latex', 'FontSize', 12);
+ylabel('Distributionally robust objective', 'Interpreter', 'latex', 'FontSize', 12);
+% title('Worst case cost vs \epsilon for different radii', 'FontSize', 16, 'Interpreter','tex');
+for i = 1:length(rho)
+    legend_labels{i} = ['$\rho = $', num2str(rho{i})];  % Convert each rho value to a string and format it
+end
+
+% Customize the x-axis ticks
+xticks = 10.^(-5:4);
+% xticklabels({'10^{-5}', '10^{-4}', '-2\%', '0\%', '2\%', '4\%', '6\%', '8\%', '10\%'})
+
+set(gca, 'XTick', xticks); % Set x-axis ticks
 % set(gca, 'XTickLabel', num2cell(-5:4), 'FontSize', 8); % Set only exponents as labels
-% 
-% % Add the legend to the plot
-% legend(legend_labels, 'Location', 'Best', 'FontSize', 8);
-% 
-% % yLimits = ylim;  % Get current limits
-% % % xLimits = xlim;
-% % padding = 0.1 * (yLimits(2) - yLimits(1));  % 10% padding
-% % ylim([yLimits(1), yLimits(2)]);  % Apply padding
-% xlim([1e-5, sys.eps{end}]);
-% 
-% % Display grid
-% grid on;
-% 
-% hold off;
-% set(gcf, 'PaperPositionMode', 'auto');
+set(gca, 'TickLabelInterpreter','latex', 'XMinorGrid', 0)
+
+% Add the legend to the plot
+legend(legend_labels, 'Location', 'Best', 'FontSize', 12, 'Interpreter', 'latex');
+
+% yLimits = ylim;  % Get current limits
+% % xLimits = xlim;
+% padding = 0.1 * (yLimits(2) - yLimits(1));  % 10% padding
+% ylim([yLimits(1), yLimits(2)]);  % Apply padding
+xlim([1e-5, sys.eps{end}]);
+
+% Display grid
+grid on;
+grid minor;
+
+hold off;
+set(gcf, 'PaperPositionMode', 'auto');
 % exportgraphics(gcf, 'cost_epsilon_h2.pdf', 'ContentType', 'vector');
