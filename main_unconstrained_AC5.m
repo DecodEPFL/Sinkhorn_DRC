@@ -23,14 +23,13 @@ rng(1234);             % Set random seed for reproducibility
 %              z(t) = C1*x(t)+D11*w(t)+D12*u(t); (z - reg. output)
 %              y(t) =  C*x(t)+D21*w(t).          (y - measurement)
 
-rho = {1e-5}; % radius
+rho = {1e-10, 1e-2, 1e-1}; % radius
 
 sys.eps = {1e-15}; % Regularization parameter
 epsilonbis = linspace(1e-8, 1, 200);
 
 [A,B1,B,~,C,~,~,D21,nx,nw,nu,~,~] = COMPleib('AC4');
 
-% sysc = ss(A, [B1 B], C, [[0;0] D21]);
 sysd = c2d(ss(A, [B B1], C, [[0;0] D21]), 0.01);
 
 sys.d = nx;
@@ -41,7 +40,7 @@ sys.p = nw;
 opt.Qt = eye(sys.d); % Stage cost: state weight matrix
 opt.Rt = eye(sys.m); % Stage cost: input weight matrix
 
-opt.N = 5; % Control horizon
+opt.N = 15; % Control horizon
 
 mean_vector = zeros(nw, 1);
 opt.m = 0.*ones((opt.N-1) * sys.p + sys.d, 1); % mean of the reference probability
@@ -54,7 +53,7 @@ opt.C = blkdiag(opt.Q, opt.R); % Cost matrix
 
 %% Generation of noise samples
 
-opt.n = 5; % Number of noise datapoints
+opt.n = 20; % Number of noise datapoints
 
 % Preallocate the cell array to store trajectories
 noise_trajectories = cell(opt.n, 1);
