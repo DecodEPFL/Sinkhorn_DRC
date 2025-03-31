@@ -3,7 +3,7 @@ close all; clearvars; clc;
 rng(1234);             % Set random seed for reproducibility
 
 %% Definition of the underlying discrete-time LTI system
-rho = {.1}; % Sinkhorn radius
+rho = {1}; % Sinkhorn radius
 
 % sys.eps = num2cell(logspace(-5, 0, 5)); % Regularization parameter
 sys.eps = {0.001, 0.01, 0.1};
@@ -21,7 +21,7 @@ sys.E = eye(sys.d);
 opt.Qt = eye(sys.d); % Stage cost: state weight matrix
 opt.Rt = eye(sys.m); % Stage cost: input weight matrix
 
-opt.N = 2; % Control horizon
+opt.N = 3; % Control horizon
 
 opt.Q = kron(eye(opt.N), opt.Qt); % State cost matrix
 opt.R = kron(eye(opt.N), opt.Rt); % Input cost matrix
@@ -33,7 +33,7 @@ opt.Sigma = kron(eye(opt.N), opt.Sigma_t);
 
 %% Generation of noise samples
 
-opt.n = 4; % Number of noise datapoints
+opt.n = 3; % Number of noise datapoints
 mean_vector = zeros(sys.d, 1); % Zero mean
 
 % Generate random noise datapoints
@@ -162,7 +162,7 @@ lam_max = 100; % Final value for lambda
 for i=1:length(sys.eps)
     eps = sys.eps{i};
     for j=1:length(rho)
-        [ret, lambda_opt, Q_opt, Phi_x, Phi_u] = goldenSearch(rho{j}, eps, tol, lam_min, lam_max, sys, sls, opt, true);
+        [ret, lambda_opt, Q_opt, Phi_x, Phi_u] = goldenSearch(rho{j}, eps, tol, lam_min, lam_max, sys, sls, opt);
         Phi{i,j}.x = Phi_x;
         Phi{i, j}.u = Phi_u;
         lambdas{i, j} = lambda_opt;
