@@ -6,7 +6,7 @@ rng(1234);             % Set random seed for reproducibility
 rho = {1}; % Sinkhorn radius
 
 % sys.eps = num2cell(logspace(-5, 0, 5)); % Regularization parameter
-sys.eps = {0.001, 0.01, 0.1};
+sys.eps = {0.1};
 epsilonbis = linspace(1e-5, 100, 200);
 % System dynamics
 sys.A = [1 1; -1 0];
@@ -185,18 +185,9 @@ Phi_W = {}; Phi_W2 = {};
 for i=1:length(rho)
     tic;
     [Phi_x, Phi_u, ret] = causal_unconstrained_Wasserstein(sys, sls, opt, rho{i});
-    elapsed = toc;
-    disp(['Elapsed time: ', num2str(elapsed), ' seconds']);
-    tic;
-    [Phi_x2, Phi_u2, ret2] = causal_unconstrained_Wasserstein_v2(sys, sls, opt, rho{i});
-    elapsed = toc;
-    disp(['Elapsed time: ', num2str(elapsed), ' seconds']);
     cost_W{i} = ret;
-    cost2{i} = ret2;
     Phi_W{i}.x = Phi_x;
     Phi_W{i}.u = Phi_u;
-    Phi_W2{i}.x = Phi_x2;
-    Phi_W2{i}.u = Phi_u2;
 end
 
 %% Compute the performances given the true distribution
